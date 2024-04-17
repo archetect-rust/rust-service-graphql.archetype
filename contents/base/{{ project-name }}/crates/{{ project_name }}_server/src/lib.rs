@@ -1,15 +1,20 @@
-use crate::settings::ServerSettings;
-use anyhow::Result;
-use {{ project_name }}_core::{
-    proto::{{ project_name }}_server::{{ ProjectName }}Server as {{ ProjectName }}ProtoServer,
-    {{ ProjectName }}Core,
-};
 use std::sync::Arc;
+
+use anyhow::Result;
+use async_graphql::http::{GraphQLPlaygroundConfig, playground_source};
+use async_graphql::http::GraphiQLSource;
+use async_graphql_axum::GraphQL;
+use axum::{
+    response::{self, IntoResponse},
+    Router,
+    routing::get,
+};
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
-use tokio_stream::wrappers::TcpListenerStream;
 
-use tonic::transport::Server;
+use {{ project_name }}_core::{{ ProjectName }}Core;
+
+use crate::settings::ServerSettings;
 
 pub mod settings;
 
@@ -53,6 +58,17 @@ impl Builder {
             listener: Arc::new(Mutex::new(Some(listener))),
         })
     }
+
+}
+
+async fn graphiql() -> impl IntoResponse {
+    response::Html(GraphiQLSource::build().endpoint("/").subscription_endpoint("/ws").finish())
+}
+
+async fn graphql_playground() -> impl IntoResponse {
+    response::Html(playground_source(
+        GraphQLPlaygroundConfig::new("/").subscription_endpoint("/ws"),
+    ))
 }
 
 impl {{ ProjectName }}Server {
@@ -64,29 +80,22 @@ impl {{ ProjectName }}Server {
         self.service_port
     }
 
-    pub async fn serve(&self) -> Result<()> {
-        let listener = self.listener.lock().await.take().expect("Listener Expected");
+pub async fn serve(&self) -> Result<()> {
+    let schema = {{ project_name }}_graphql::schema::create_schema();
 
-        let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-        health_reporter
-            .set_serving::<{{ ProjectName }}ProtoServer<{{ ProjectName }}Core>>()
-            .await;
+    let router = Router::new()
+        .route("/", get(graphiql).post_service(GraphQL::new(schema)))
+        .route("/graphiql", get(graphiql))
+        .route("/playground", get(graphql_playground));
 
-        let reflection_service = tonic_reflection::server::Builder::configure()
-            .register_encoded_file_descriptor_set({{ project_name }}_core::proto::FILE_DESCRIPTOR_SET)
-            .register_encoded_file_descriptor_set(tonic_health::proto::GRPC_HEALTH_V1_FILE_DESCRIPTOR_SET)
-            .build()
-            .unwrap();
+    let listener = self.listener.lock().await.take().expect("Listener Expected");
 
-        let server = Server::builder()
-            .add_service(health_service)
-            .add_service(reflection_service)
-            .add_service({{ ProjectName }}ProtoServer::new(self.core.clone()));
+    tracing::info!("{{ ProjectName }} starting on {}", listener.local_addr()?);
+    tracing::info!("GraphiQL: http://{}/graphiql", listener.local_addr()?);
+    tracing::info!("Playground: http://{}/playground", listener.local_addr()?);
 
-        tracing::info!("{{ ProjectName }} started on {}", listener.local_addr()?);
+    axum::serve(listener, router).await?;
 
-        server.serve_with_incoming(TcpListenerStream::new(listener)).await?;
-
-        Ok(())
-    }
+    Ok(())
+}
 }

@@ -1,9 +1,9 @@
 ---
-description: "A Rust gRPC-based Microservice"
+description: "A Rust GraphQL-based Microservice"
 authors: ["Jimmie Fulton <jimmie.fulton@gmail.com>"]
 languages: ["Rust"]
-frameworks: ["Tonic"]
-tags: ["Service", "gRPC"]
+frameworks: ["async-graphql"]
+tags: ["Service", "GraphQL"]
 
 requires:
   archetect: 2.0.0-ALPHA.15
