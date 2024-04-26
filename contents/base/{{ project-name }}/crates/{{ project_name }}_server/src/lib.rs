@@ -7,7 +7,7 @@ use async_graphql_axum::GraphQL;
 use axum::{
     response::{self, IntoResponse},
     Router,
-    routing::get,
+    routing::{get, post_service },
 };
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
@@ -62,12 +62,12 @@ impl Builder {
 }
 
 async fn graphiql() -> impl IntoResponse {
-    response::Html(GraphiQLSource::build().endpoint("/").subscription_endpoint("/ws").finish())
+    response::Html(GraphiQLSource::build().endpoint("/graphql").finish())
 }
 
 async fn graphql_playground() -> impl IntoResponse {
     response::Html(playground_source(
-        GraphQLPlaygroundConfig::new("/").subscription_endpoint("/ws"),
+        GraphQLPlaygroundConfig::new("/graphql"),
     ))
 }
 
@@ -84,7 +84,8 @@ pub async fn serve(&self) -> Result<()> {
     let schema = {{ project_name }}_graphql::schema::create_schema();
 
     let router = Router::new()
-        .route("/", get(graphiql).post_service(GraphQL::new(schema)))
+        .route("/", get(graphiql))
+        .route("/graphql", post_service(GraphQL::new(schema.clone())))
         .route("/graphiql", get(graphiql))
         .route("/playground", get(graphql_playground));
 
