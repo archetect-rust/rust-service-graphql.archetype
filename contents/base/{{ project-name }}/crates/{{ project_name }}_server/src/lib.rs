@@ -81,7 +81,10 @@ impl {{ ProjectName }}Server {
     }
 
 pub async fn serve(&self) -> Result<()> {
-    let schema = {{ project_name }}_graphql::schema::create_schema();
+    let schema = {{ project_name }}_core::graphql::create_schema()
+        .data(self.core.clone())
+        .finish()
+        ;
 
     let router = Router::new()
         .route("/", get(graphiql))

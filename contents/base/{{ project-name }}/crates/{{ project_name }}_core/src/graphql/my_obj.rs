@@ -13,4 +13,3 @@ impl MyObj {
         self.a + self.b
     }
 }
-

@@ -24,7 +24,37 @@ context += prompt("Service Port:", "service-port", #{
     max: 65534,
 });
 
+context += render(Archetype("model-casing"), ANSWERS + #{
+    default_model: context["project-prefix"],
+});
+
+if switch_enabled("debug-context") {
+    display(as_yaml(context));
+}
+
 render(Directory("contents/base"), context);
+for entity in context.model.entities.values() {
+    render(Directory("contents/entity_persistence"), context + entity);
+}
+
+if type_of(context.applications) == "map" {
+    let settings = archetect::archetype::settings();
+    let path = Path(`${context["project-name"]}/specs/clients`);
+    let archetype = Archetype("generate-protobuf");
+    for application in context.applications.values() {
+        render(archetype, path, application, settings);
+
+        if type_of(application.model.entities) == "map" {
+            let directory = Directory("contents/entity_graphql");
+            for entity in application.model.entities.values() {
+                let context = context + entity + #{
+                    application: application,
+                };
+                render(directory, context);
+            }
+        }
+    }
+}
 
 // return context
 context

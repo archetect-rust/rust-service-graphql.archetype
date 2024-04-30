@@ -1,6 +1,5 @@
 use async_graphql::{ID, Object};
-use crate::model::types::cart::{Cart};
-use crate::model::types::my_obj::{MyObj};
+use crate::graphql;
 
 pub struct QueryRoot;
 
@@ -12,17 +11,17 @@ impl QueryRoot {
     }
 
     /// Get Carts
-    async fn carts(&self) -> Vec<Cart> {
+    async fn carts(&self) -> Vec<graphql::Cart> {
         let mut carts = vec![];
-        carts.push(Cart {
+        carts.push(graphql::Cart {
             id: ID::from("1"),
             contents: "One".to_string(),
         });
-        carts.push(Cart {
+        carts.push(graphql::Cart {
             id: ID::from("2"),
             contents: "Two".to_string(),
         });
-        carts.push(Cart {
+        carts.push(graphql::Cart {
             id: ID::from("3"),
             contents: "Three".to_string(),
         });
@@ -30,17 +29,17 @@ impl QueryRoot {
     }
 
     /// Expand a bunch of objects
-    async fn my_objects(&self, #[graphql(desc = "Count of Objects")] count: i32) -> Vec<MyObj> {
+    async fn my_objects(&self, #[graphql(desc = "Count of Objects")] count: i32) -> Vec<graphql::MyObj> {
         let mut results = vec![];
         for i in 0..count {
-            results.push(MyObj { a: i, b: i });
+            results.push(graphql::MyObj { a: i, b: i });
         }
         results
     }
 
     /// Get MyObj
     #[graphql(name = "myObject")]
-    async fn my_object(&self, a: i32, b: i32) -> MyObj {
-       MyObj { a, b }
+    async fn my_object(&self, a: i32, b: i32) -> graphql::MyObj {
+       graphql::MyObj { a, b }
     }
 }

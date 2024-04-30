@@ -23,7 +23,7 @@ impl Cart {
         &self,
         #[graphql(desc = "Id of object", default = 5)] a: i32,
         #[graphql(desc = "Id of object", default = 5)] b: i32,
-    ) -> crate::model::types::my_obj::MyObj {
-        crate::model::types::my_obj::MyObj { a, b }
+    ) -> crate::graphql::MyObj {
+        crate::graphql::MyObj { a, b }
     }
 }

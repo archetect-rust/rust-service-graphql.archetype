@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 {{ project_name }}_core = { path = "../{{ project_name }}_core" }
-{{ project_name }}_graphql = { path = "../{{ project_name }}_graphql" }
 {{ project_name }}_persistence = { path = "../{{ project_name }}_persistence" }
 
 anyhow = "1.0"
