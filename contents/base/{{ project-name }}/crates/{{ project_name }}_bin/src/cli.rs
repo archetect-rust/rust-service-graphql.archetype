@@ -1,10 +1,11 @@
-use clap::{command, Arg, ArgMatches, Command};
+use clap::{Arg, ArgAction, ArgMatches, command, Command, value_parser};
+use clap::builder::{BoolishValueParser, EnumValueParser};
 
 use crate::traces::TraceFormat;
 
 pub fn arg_matches() -> ArgMatches {
     command!()
-        .name("{{ project-name }}")
+        .name("{{ project-name }}-gateway")
         .subcommand(
             Command::new("migrate")
                 .subcommand_required(true)
@@ -16,7 +17,9 @@ pub fn arg_matches() -> ArgMatches {
                         .arg(
                             Arg::new("all")
                                 .help("Rollback ALL migrations.  This will effectively destroy your entire database!")
-                                .long("all"),
+                                .long("all")
+                                .action(ArgAction::Set)
+
                         ),
                 ),
         )
@@ -37,67 +40,82 @@ pub fn arg_matches() -> ArgMatches {
                 .help("Specifies additional configuration to merge.")
                 .long("config-file")
                 .short('c')
-                .takes_value(true),
+                .value_parser(EnumValueParser::<TraceFormat>::new())
+                .action(ArgAction::Set)
+                .env("CONFIG_FILE")
         )
         .arg(
             Arg::new("host")
                 .help("The host the server listens on.")
                 .long("host")
-                .takes_value(true),
+                .action(ArgAction::Set)
+                .env("SERVER_HOST")
         )
         .arg(
             Arg::new("log-sql")
                 .help("Turns sql logging on or off.")
                 .long("log-sql")
-                .default_missing_value("true")
-                .possible_values(&["true", "false"]),
+                .action(ArgAction::SetTrue)
+                .value_parser(BoolishValueParser::new())
+                .env("PERSISTENCE_DATABASE_LOG_SQL")
         )
         .arg(
             Arg::new("service-port")
                 .help("Service Port")
                 .short('p')
                 .long("service-port")
-                .takes_value(true)
-                .validator(is_valid_port),
+                .action(ArgAction::Set)
+                .value_parser(value_parser!(i64).range(1024..65535))
+                .env("SERVER_SERVICE_PORT")
         )
         .arg(
             Arg::new("temp-db")
                 .help("Initialize and migrate an ephemeral database")
                 .long("temp-db")
-                .default_missing_value("true")
-                .possible_values(&["true", "false"]),
+                .value_parser(BoolishValueParser::new())
+                .action(ArgAction::SetTrue)
+                .env("PERSISTENCE_TEMP_DB")
         )
         .arg(
             Arg::new("migrate")
                 .help("Whether or not to automatically migrate the database")
-                .long("migrate"),
+                .long("migrate")
+                .action(ArgAction::SetTrue)
+                .value_parser(BoolishValueParser::new())
+                .env("PERSISTENCE_MIGRATE")
+
         )
         .arg(
             Arg::new("database-url")
                 .help("Database URL")
                 .long("database-url")
-                .takes_value(true),
+                .action(ArgAction::Set)
+                .env("PERSISTENCE_DATABASE_URL")
         )
         .arg(
             Arg::new("tracing-format")
                 .help("Specify logging format")
                 .long("tracing-format")
-                .possible_values(TraceFormat::possible_values())
-                .ignore_case(false),
+                .value_parser(EnumValueParser::<TraceFormat>::new())
+                .action(ArgAction::Set)
+                .env("TRACING_FORMAT")
         )
         .arg(
             Arg::new("tracing-filter")
                 .help("Specify logging and tracing level filters")
                 .long("tracing-filter")
-                .takes_value(true)
-                .ignore_case(false),
+                .action(ArgAction::Set)
+                .env("TRACING_FILTER")
         )
+    {%- for application_key in applications %}
+    {%- set application = applications[application_key] %}
+        .arg(
+            Arg::new("{{ application['project-name'] }}")
+                .help("{{ application['project-title'] }} Endpoint")
+                .long("{{ application['project-name'] }}")
+                .action(ArgAction::Set)
+                .env("CORE_{{ application['PROJECT_NAME'] }}_URL")
+        )
+    {%- endfor %}
         .get_matches()
-}
-
-fn is_valid_port(value: &str) -> Result<(), String> {
-    value
-        .parse::<u16>()
-        .map_err(|_| format!("Ports must be an integer between 0 and {}", u16::MAX))
-        .map(|_| ())
 }

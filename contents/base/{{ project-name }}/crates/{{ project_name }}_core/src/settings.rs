@@ -1,49 +1,76 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CoreSettings {
-    clients: HashMap<String, ClientConfig>,
+    {%- for application_key in applications %}
+    {%- set application = applications[application_key] %}
+    {{ application['project_name'] }}: ClientConfig,
+    {%- endfor %}
 }
 
 impl CoreSettings {
-    pub fn new() -> CoreSettings {
+    pub fn new(customer_service: ClientConfig, account_service: ClientConfig) -> CoreSettings {
         CoreSettings {
-            clients: Default::default(),
+            {%- for application_key in applications %}
+            {%- set application = applications[application_key] %}
+            {{ application['project_name'] }},
+            {%- endfor %}
         }
     }
+    {%- for application_key in applications %}
+    {%- set application = applications[application_key] %}
 
-    pub fn clients(&self) -> &HashMap<String, ClientConfig> {
-        &self.clients
+    pub fn {{ application['project_name'] }}(&self) -> &ClientConfig {
+        &self.{{ application['project_name'] }}
     }
 
-    pub fn clients_mut(&mut self) -> &mut HashMap<String, ClientConfig> {
-        &mut self.clients
-    }
-}
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ClientConfig {
-    endpoint: String,
-}
-
-impl ClientConfig {
-    pub fn new<T: Into<String>>(endpoint: T) -> ClientConfig {
-        ClientConfig {
-            endpoint: endpoint.into(),
-        }
+    pub fn set_{{ application['project_name'] }}(&mut self, {{ application['project_name'] }}: ClientConfig) {
+        self.{{ application['project_name'] }} = {{ application['project_name'] }};
     }
+    {%- endfor %}
 
-    pub fn endpoint(&self) -> &str {
-        self.endpoint.as_str()
-    }
 }
 
 impl Default for CoreSettings {
     fn default() -> Self {
-        // Put client defaults here
-        let client_map = HashMap::new();
-
-        CoreSettings { clients: client_map }
+        CoreSettings {
+            {%- for application_key in applications %}
+            {%- set application = applications[application_key] %}
+            {{ application['project_name'] }}: Default::default(),
+            {%- endfor %}
+        }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ClientConfig {
+    #[serde(default = "default_client_url")]
+    url: Url,
+}
+
+impl ClientConfig {
+    pub fn new(url: Url) -> ClientConfig {
+        ClientConfig {
+            url,
+        }
+    }
+
+
+    pub fn url(&self) -> &Url {
+        &self.url
+    }
+}
+
+impl Default for ClientConfig {
+    fn default() -> Self {
+        ClientConfig {
+            url: default_client_url(),
+        }
+    }
+}
+
+fn default_client_url() -> Url {
+    Url::parse("http://localhost:8080").expect("Valid Url")
 }

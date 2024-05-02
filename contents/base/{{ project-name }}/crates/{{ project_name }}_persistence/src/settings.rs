@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use url::Url;
 
-const DEFAULT_DATABASE_URL: &str = "postgres://test@localhost/{{ project-name }}";
-
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct PersistenceSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -43,6 +41,7 @@ impl PersistenceSettings {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DatabaseSettings {
+    #[serde(default = "default_database_url")]
     url: Url,
     #[serde(skip_serializing_if = "Option::is_none")]
     max_connections: Option<u32>,
@@ -96,7 +95,7 @@ impl DatabaseSettings {
 impl Default for DatabaseSettings {
     fn default() -> Self {
         DatabaseSettings {
-            url: Url::parse(DEFAULT_DATABASE_URL).expect("Improperly formed Database URL"),
+            url: default_database_url(),
             max_connections: None,
             min_connections: None,
             connect_timeout_millis: None,
@@ -105,4 +104,8 @@ impl Default for DatabaseSettings {
             log_sql: None,
         }
     }
+}
+
+fn default_database_url() -> Url {
+    Url::parse("postgres://test@localhost/sample-domain-gateway").expect("Improperly formatted Database URL")
 }

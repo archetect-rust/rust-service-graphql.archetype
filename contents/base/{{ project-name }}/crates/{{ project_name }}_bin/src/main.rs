@@ -18,6 +18,7 @@ async fn main() -> Result<()> {
     match args.subcommand() {
         Some(("migrate", args)) => match args.subcommand() {
             Some(("up", _args)) => {
+                // Don't migrate automatically
                 settings.persistence_mut().set_migrate(Some(false));
                 {{ ProjectName }}Persistence::builder()
                     .with_settings(settings.persistence())
@@ -27,7 +28,8 @@ async fn main() -> Result<()> {
                     .await?;
             }
             Some(("down", args)) => {
-                let steps = if args.is_present("all") { None } else { Some(1) };
+                let steps = if args.get_flag("all") { None } else { Some(1) };
+                // Don't migrate automatically
                 settings.persistence_mut().set_migrate(Some(false));
                 {{ ProjectName }}Persistence::builder()
                     .with_settings(settings.persistence())

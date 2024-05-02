@@ -3,16 +3,16 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 use clap::ArgMatches;
-use config::{Config, ConfigError, Environment, File, Source, Value};
+use config::{Config, ConfigError, File, Source, Value};
 use serde::{Deserialize, Serialize};
 
-use crate::traces::TraceFormat;
 use {{ project_name }}_core::settings::CoreSettings;
 use {{ project_name }}_persistence::settings::PersistenceSettings;
 use {{ project_name }}_server::settings::ServerSettings;
 
+use crate::traces::TraceFormat;
+
 const DEFAULT_CONFIG_FILE: &str = "{{ project-name }}";
-const DEFAULT_ENVIRONMENT_PREFIX: &str = "APPLICATION";
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Settings {
@@ -80,7 +80,7 @@ impl Settings {
         let config = config.add_source(File::with_name(DEFAULT_CONFIG_FILE).required(false));
 
         // Merge Config File specified from Command Line
-        let config = if let Some(config_file) = args.value_of("config-file") {
+        let config = if let Some(config_file) = args.get_one::<String>("config-file") {
             if let Ok(config_file) = shellexpand::full(config_file) {
                 let config = config.add_source(File::with_name(config_file.as_ref()).required(true));
                 config
@@ -91,21 +91,23 @@ impl Settings {
             config
         };
 
-        // Merge Environment Variable Overrides
-        let config = config.add_source(Environment::with_prefix(DEFAULT_ENVIRONMENT_PREFIX).separator("_"));
+        // Merge Environment Variables/Command Line overrides
+        let clap_source = ClapSource::builder()
+            .map(ArgType::string("database-url"), MapTo::string("persistence.database.url"))
+            .map(ArgType::flag("migrate"), MapTo::string("persistence.migrate"))
+            .map(ArgType::string("host"), MapTo::string("server.host"))
+            .map(ArgType::flag("log-sql"), MapTo::string("persistence.database.log_sql"))
 
-        // Merge Command Line overrides
-        let mut mappings = HashMap::new();
-        mappings.insert("database-url".into(), "persistence.database.url".into());
-        mappings.insert("host".into(), "server.host".into());
-        mappings.insert("log-sql".into(), "persistence.database.log_sql".into());
-        // mappings.insert("management-port".into(), "server.management.port".into());
-        mappings.insert("migrate".into(), "persistence.migrate".into());
-        mappings.insert("service-port".into(), "server.service.port".into());
-        mappings.insert("temp-db".into(), "persistence.temporary".into());
-        mappings.insert("tracing-format".into(), "tracing.format".into());
-        mappings.insert("tracing-filter".into(), "tracing.filter".into());
-        let config = config.add_source(Clap::new(args.clone(), mappings));
+            .map(ArgType::u64("service-port"), MapTo::string("server.service.port"))
+            .map(ArgType::flag("temp-db"), MapTo::string("persistence.temporary"))
+            .map(ArgType::string("tracing-format"), MapTo::string("tracing.format"))
+            .map(ArgType::string("tracing-filter"), MapTo::string("tracing.filter"))
+{%- for application_key in applications %}
+{%- set application = applications[application_key] %}
+            .map(ArgType::string("{{ application['project-name'] }}"), MapTo::string("core.{{ application['project_name'] }}.url"))
+{%- endfor %}
+            .build(args.clone());
+        let config = config.add_source(clap_source);
 
         let conf = config.build()?;
 
@@ -139,29 +141,97 @@ impl Default for TraceSettings {
 }
 
 #[derive(Clone, Debug)]
-struct Clap {
-    keys: HashMap<String, String>,
+struct ClapSource {
+    mappings: HashMap<ArgType, MapTo>,
     matches: ArgMatches,
 }
 
-impl Clap {
-    pub fn new(matches: ArgMatches, keys: HashMap<String, String>) -> Clap {
-        Clap { keys, matches }
+struct ClapBuilder {
+    mappings: HashMap<ArgType, MapTo>,
+}
+
+impl ClapBuilder {
+    fn build(self, matches: ArgMatches) -> ClapSource {
+        ClapSource {
+            mappings: self.mappings,
+            matches,
+        }
+    }
+
+    fn map(mut self, arg: ArgType, property: MapTo) -> ClapBuilder {
+        self.mappings.insert(arg, property);
+        self
     }
 }
 
-impl Source for Clap {
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+enum ArgType {
+    String(String),
+    Flag(String),
+    U64(String),
+}
+
+impl ArgType {
+    fn string<T: Into<String>>(arg: T) -> ArgType {
+        ArgType::String(arg.into())
+    }
+
+    fn flag<T: Into<String>>(arg: T) -> ArgType {
+        ArgType::Flag(arg.into())
+    }
+
+    fn u64<T: Into<String>>(arg: T) -> ArgType {
+        ArgType::U64(arg.into())
+    }
+}
+
+#[derive(Clone, Debug)]
+enum MapTo {
+    String(String),
+}
+
+impl MapTo {
+    fn string<T: Into<String>>(property: T) -> MapTo {
+        MapTo::String(property.into())
+    }
+}
+
+impl ClapSource {
+    pub fn builder() -> ClapBuilder {
+        ClapBuilder {
+            mappings: Default::default(),
+        }
+    }
+}
+
+impl Source for ClapSource {
     fn clone_into_box(&self) -> Box<dyn Source + Send + Sync> {
         Box::new((*self).clone())
     }
 
     fn collect(&self) -> Result<HashMap<String, Value>, ConfigError> {
-        let mut results = HashMap::new();
-        for (key, mapped) in &self.keys {
-            if let Some(value) = self.matches.value_of(key) {
-                results.insert(mapped.into(), value.into());
-            } else if self.matches.is_present(key) {
-                results.insert(mapped.into(), "true".into());
+        let mut results: HashMap<String, Value> = HashMap::new();
+        for (arg_type, map_to) in &self.mappings {
+            match map_to {
+                MapTo::String(property) => {
+                    match arg_type {
+                        ArgType::String(arg) => {
+                            if let Some(value) = self.matches.get_one::<String>(arg) {
+                                results.insert(property.into(), value.clone().into());
+                            }
+                        }
+                        ArgType::Flag(arg) => {
+                            if self.matches.get_flag(arg) {
+                                results.insert(property.into(), "true".into());
+                            }
+                        }
+                        ArgType::U64(arg) => {
+                            if let Some(value) = self.matches.get_one::<i64>(arg) {
+                                results.insert(property.into(), (*value).into());
+                            }
+                        }
+                    }
+                }
             }
         }
         Ok(results)

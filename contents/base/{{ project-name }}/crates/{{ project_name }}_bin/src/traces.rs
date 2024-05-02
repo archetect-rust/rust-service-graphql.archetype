@@ -1,27 +1,20 @@
 #![allow(non_camel_case_types)]
 
-use anyhow::Result;
-use clap::{ArgEnum, PossibleValue};
-use serde::{Deserialize, Serialize};
 use std::env;
+
+use anyhow::Result;
+use clap::ValueEnum;
+use serde::{Deserialize, Serialize};
+use tracing_subscriber::{EnvFilter, fmt};
 use tracing_subscriber::prelude::*;
-use tracing_subscriber::{fmt, EnvFilter};
 
 use crate::settings::TraceSettings;
 
-#[derive(Copy, Clone, Debug, ArgEnum, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, ValueEnum, Serialize, Deserialize)]
 pub enum TraceFormat {
     standard,
     json,
     pretty,
-}
-
-impl TraceFormat {
-    pub fn possible_values() -> impl Iterator<Item = PossibleValue<'static>> {
-        TraceFormat::value_variants()
-            .iter()
-            .filter_map(ArgEnum::to_possible_value)
-    }
 }
 
 impl Default for TraceFormat {

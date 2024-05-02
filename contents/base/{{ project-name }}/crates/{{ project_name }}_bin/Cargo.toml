@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 anyhow = "1.0"
 atty = "0.2"
-clap = { version ="3", features = ["cargo", "derive"] }
+clap = { version = "4.5.4", features = ["cargo", "derive", "env"] }
 config = { version = "0.12", default-features = false, features = ["yaml"] }
 dotenv = "0.15"
 serde = {version = "1.0", features = ["serde_derive"] }
