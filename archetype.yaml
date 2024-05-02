@@ -13,7 +13,7 @@ components:
   generate-protobuf: https://github.com/archetect/archetect-protobuf-generator.archetype.git
 
 templating:
-  undefined_behavior: Lenient
+  undefined_behavior: Chainable
 
 
 

@@ -11,3 +11,8 @@ edition = "2021"
 async-graphql = "7.0.3"
 serde = {version = "1.0", features = ["serde_derive"] }
 anyhow = "1.0"
+prost = "0.12.0"
+tonic = "0.11.0"
+
+[build-dependencies]
+tonic-build = "0.11.0"
