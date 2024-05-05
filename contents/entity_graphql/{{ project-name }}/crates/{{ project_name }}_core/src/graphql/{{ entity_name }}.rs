@@ -4,7 +4,7 @@ use async_graphql::{Description, ID, Object};
 /// Shopping Cart
 #[derive(Description)]
 pub struct {{ EntityName }} {
-    pub id: ID,
+    pub id: Option<ID>,
 {%- for field_key in fields -%}
 {%- set field = fields[field_key] %}
     pub {{ field["field_name"] }}: {{ rust.field_rust_type(field) }},
@@ -14,8 +14,8 @@ pub struct {{ EntityName }} {
 #[Object(use_type_description)]
 impl {{ EntityName  }} {
     /// Get ID
-    async fn id(&self) -> ID {
-        self.id.clone()
+    async fn id(&self) -> &Option<ID> {
+        &self.id
     }
 
 {%- for field_key in fields %}

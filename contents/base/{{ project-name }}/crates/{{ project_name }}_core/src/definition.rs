@@ -22,6 +22,17 @@ impl {{ ProjectName }}Core {
     pub fn builder(persistence: {{ ProjectName }}Persistence) -> Builder {
         Builder::new(persistence)
     }
+
+    pub fn persistence(&self) -> &ExampleDomainGatewayPersistence {
+        &self.persistence
+    }
+    {%- for application_key in applications %}
+    {%- set application = applications[application_key] %}
+
+    pub fn {{ application["project_name"] }}(&self) -> {{ application["ProjectName"] }}Client<Channel> {
+        self.{{ application["project_name"] }}.clone()
+    }
+    {%- endfor %}
 }
 
 pub struct Builder {
