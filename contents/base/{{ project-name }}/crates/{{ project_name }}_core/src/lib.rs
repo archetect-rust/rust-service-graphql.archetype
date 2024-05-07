@@ -1,8 +1,8 @@
 mod conversion;
 pub mod graphql;
-mod definition;
+mod builder;
 pub mod proto;
 pub mod settings;
 
-pub use definition::{{ ProjectName }}Core;
+pub use builder::{{ ProjectName }}Core;
 pub use conversion::*;

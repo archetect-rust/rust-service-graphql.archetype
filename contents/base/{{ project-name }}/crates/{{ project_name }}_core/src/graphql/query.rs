@@ -1,7 +1,6 @@
 use async_graphql::{Context, ID, Object, Result};
+
 use crate::{ConvertTo, {{ ProjectName }}Core, graphql, proto};
-
-
 
 pub struct QueryRoot;
 
@@ -11,13 +10,20 @@ impl QueryRoot {
     {%- set application = applications[application_key] %}
     {%- for entity_key in application.model.entities %}
     {%- set entity = application.model.entities[entity_key] %}
-    async fn {{ entity["entity_name"] }}<'ctx>(&self, context: &Context<'ctx>, id: ID) -> Result<graphql::{{ entity["EntityName"] }}> {
-        let mut {{ application["project_name"] }} = context.data::<{{ ProjectName }}Core>()?
-            .clone().{{ application["project_name"] }}();
-        let result = {{ application["project_name"] }}.get_{{ entity["entity_name"] }}(proto::Get{{ entity["EntityName"] }}Request {
-            id: id.0,
-        }).await?.into_inner();
-        let result = result.convert_to()?;
+    /// Get {{ entity["EntityName"] }} by ID
+    #[graphql(name = "{{ entity['entityName'] }}")]
+    async fn {{ entity["entity_name"] }}<'ctx>(
+            &self,
+            context: &Context<'ctx>,
+            #[graphql(desc = "{{ entity['entityName'] }} Id")] id: ID,
+    ) -> Result<graphql::{{ entity["EntityName"] }}> {
+        let mut {{ application["project_name"] }} = context.data::<{{ ProjectName }}Core>()?.clone().{{ application["project_name"] }}();
+        let result = {{ application["project_name"] }}
+            .get_{{ entity["entity_name"] }}(proto::Get{{ entity["EntityName"] }}Request { id: id.0, })
+            .await?
+            .into_inner()
+            .convert_to()
+        ;
         Ok(result)
     }
 

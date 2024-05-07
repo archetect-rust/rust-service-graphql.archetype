@@ -23,7 +23,7 @@ impl {{ ProjectName }}Core {
         Builder::new(persistence)
     }
 
-    pub fn persistence(&self) -> &ExampleDomainGatewayPersistence {
+    pub fn persistence(&self) -> &{{ ProjectName }}Persistence {
         &self.persistence
     }
     {%- for application_key in applications %}

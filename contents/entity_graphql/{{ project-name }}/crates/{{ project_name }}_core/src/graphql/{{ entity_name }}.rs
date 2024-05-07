@@ -1,7 +1,7 @@
 {% import "macros/rust" as rust -%}
-use async_graphql::{Description, ID, Object};
+use async_graphql::{Description, ID, InputObject, Object};
 
-/// Shopping Cart
+/// {{ EntityName }}
 #[derive(Description)]
 pub struct {{ EntityName }} {
     pub id: Option<ID>,
@@ -9,6 +9,16 @@ pub struct {{ EntityName }} {
 {%- set field = fields[field_key] %}
     pub {{ field["field_name"] }}: {{ rust.field_rust_type(field) }},
 {%- endfor %}
+}
+
+/// {{ EntityName }} Input
+#[derive(Description, InputObject)]
+pub struct {{ EntityName }}Input {
+    pub id: Option<ID>,
+    {%- for field_key in fields -%}
+    {%- set field = fields[field_key] %}
+    pub {{ field["field_name"] }}: {{ rust.field_rust_type(field) }},
+    {%- endfor %}
 }
 
 #[Object(use_type_description)]

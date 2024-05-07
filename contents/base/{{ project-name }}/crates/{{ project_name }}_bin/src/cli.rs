@@ -1,5 +1,5 @@
 use clap::{Arg, ArgAction, ArgMatches, command, Command, value_parser};
-use clap::builder::{BoolishValueParser, EnumValueParser};
+use clap::builder::{BoolishValueParser, EnumValueParser, PathBufValueParser};
 
 use crate::traces::TraceFormat;
 
@@ -40,7 +40,7 @@ pub fn arg_matches() -> ArgMatches {
                 .help("Specifies additional configuration to merge.")
                 .long("config-file")
                 .short('c')
-                .value_parser(EnumValueParser::<TraceFormat>::new())
+                .value_parser(PathBufValueParser::new())
                 .action(ArgAction::Set)
                 .env("CONFIG_FILE")
         )

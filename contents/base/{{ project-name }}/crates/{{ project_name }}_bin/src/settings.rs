@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::PathBuf;
 
 use clap::ArgMatches;
 use config::{Config, ConfigError, File, Source, Value};
@@ -80,8 +81,8 @@ impl Settings {
         let config = config.add_source(File::with_name(DEFAULT_CONFIG_FILE).required(false));
 
         // Merge Config File specified from Command Line
-        let config = if let Some(config_file) = args.get_one::<String>("config-file") {
-            if let Ok(config_file) = shellexpand::full(config_file) {
+        let config = if let Some(config_file) = args.get_one::<PathBuf>("config-file") {
+            if let Ok(config_file) = shellexpand::full(config_file.to_str().expect("Valid Config Path")) {
                 let config = config.add_source(File::with_name(config_file.as_ref()).required(true));
                 config
             } else {

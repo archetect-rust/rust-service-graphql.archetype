@@ -1,30 +1,38 @@
-use anyhow::Error;
 use async_graphql::ID;
-use crate::{graphql, proto};
-use crate::conversion::ConvertTo;
+use crate::{ConvertFrom, graphql, proto};
 
-impl ConvertTo<proto::{{ EntityName }}, anyhow::Error> for graphql::{{ EntityName }} {
-    fn convert_to(self) -> Result<proto::{{ EntityName }}, anyhow::Error> {
-        Ok(proto::{{ EntityName }} {
-            id: self.id.map(|v| v.0),
+impl ConvertFrom<graphql::{{ EntityName }}> for proto::{{ EntityName }} {
+    fn convert_from(value: graphql::{{ EntityName }}) -> Self {
+        proto::{{ EntityName }} {
+            id: value.id.map(|v| v.0),
             {%- for field_key in fields -%}
             {%- set field = fields[field_key] %}
-            {{ field["field_name"] }}: self.{{ field["field_name"] }},
+            {{ field["field_name"] }}: value.{{ field["field_name"] }},
             {%- endfor %}
-        })
+        }
     }
 }
 
-impl ConvertTo<graphql::{{ EntityName }}, Error> for proto::{{ EntityName }} {
-    fn convert_to(self) -> Result<graphql::{{ EntityName }}, Error> {
-        Ok(
-            graphql::{{ EntityName }} {
-                id: self.id.map(|id| ID::from(id)),
-                {%- for field_key in fields -%}
-                {%- set field = fields[field_key] %}
-                {{ field["field_name"] }}: self.{{ field["field_name"] }},
-                {%- endfor %}
-            }
-        )
+impl ConvertFrom<graphql::{{ EntityName }}Input> for proto::{{ EntityName }} {
+    fn convert_from(value: graphql::{{ EntityName }}Input) -> Self {
+        proto::{{ EntityName }} {
+            id: value.id.map(|v| v.0),
+            {%- for field_key in fields -%}
+            {%- set field = fields[field_key] %}
+            {{ field["field_name"] }}: value.{{ field["field_name"] }},
+            {%- endfor %}
+        }
+    }
+}
+
+impl ConvertFrom<proto::{{ EntityName }}> for graphql::{{ EntityName }} {
+    fn convert_from(value: proto::{{ EntityName }}) -> Self {
+        graphql::{{ EntityName }} {
+            id: value.id.map(|id| ID::from(id)),
+            {%- for field_key in fields -%}
+            {%- set field = fields[field_key] %}
+            {{ field["field_name"] }}: value.{{ field["field_name"] }},
+            {%- endfor %}
+        }
     }
 }
