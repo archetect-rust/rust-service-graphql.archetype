@@ -1,0 +1,14 @@
+---
+# Developer Configuration File
+# This configuration will be discovered automatically when running this application from the root of the project
+server:
+  service:
+    port: {{ service-port }}
+core: {% if not applications or applications|length == 0 %}{}{% endif %}
+{%- for application_key in applications %}
+{%- set application = applications[application_key] %}
+  {{ application["project_name"] }}:
+    url: "http://localhost:{% if application['service-port'] %}{{ application['service-port'] }}{% else %}8080{% endif %}"
+{%- endfor %}
+persistence:
+  temporary: true

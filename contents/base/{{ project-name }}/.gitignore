@@ -4,5 +4,3 @@ target/
 
 # Do not check in local developer configuration
 .env
-{{ project-name }}.yml
-{{ project-name }}.yaml
