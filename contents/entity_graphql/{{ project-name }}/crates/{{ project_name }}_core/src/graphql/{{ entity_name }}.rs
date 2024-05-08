@@ -1,5 +1,5 @@
 {% import "macros/rust" as rust -%}
-use async_graphql::{Description, ID, InputObject, Object};
+use async_graphql::{Description, ID, InputObject, Object, SimpleObject};
 
 /// {{ EntityName }}
 #[derive(Description)]
@@ -35,4 +35,24 @@ impl {{ EntityName  }} {
         &self.{{ field["field_name"] }}
     }
 {%- endfor %}
+}
+
+#[derive(SimpleObject)]
+pub struct {{ EntityName | pluralize }}Page {
+    /// Account Records
+    pub records: Vec<{{ EntityName }}>,
+    /// Page Index
+    pub index: u32,
+    /// Next Page Index
+    pub next: u32,
+    /// Has Next Page
+    pub has_next: bool,
+    /// Previous Page Index
+    pub previous: u32,
+    /// Has Previous Page
+    pub has_previous: bool,
+    /// Total Pages
+    pub total: u32,
+    /// Total Customer Records
+    pub total_records: u64,
 }

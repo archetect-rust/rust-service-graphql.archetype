@@ -27,6 +27,24 @@ impl QueryRoot {
         Ok(result)
     }
 
+    /// Get {{ entity["EntityName"] | pluralize }}
+    #[graphql(name = "{{ entity['entityName'] | pluralize }}")]
+    async fn {{ entity['entity_name'] | pluralize }}<'ctx>(
+        &self,
+        context: &Context<'ctx>,
+        #[graphql(desc = "Page Index")] page_index: u32,
+        #[graphql(desc = "Page Size")] page_size: u32,
+    ) -> Result<graphql::{{ entity["EntityName"] | pluralize }}Page> {
+        let mut {{ application["project_name"] }} = context.data::<{{ ProjectName }}Core>()?.clone().{{ application["project_name"] }}();
+        let result = {{ application["project_name"] }}
+            .get_{{ entity["entity_name"] |pluralize }}(proto::Get{{ entity["EntityName"] | pluralize }}Request { page_index, page_size })
+            .await?
+            .into_inner()
+            .convert_to()
+        ;
+        Ok(result)
+    }
+
     {% endfor %}
     {%- endfor %}
 
