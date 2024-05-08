@@ -7,6 +7,7 @@ pub struct {{ EntityName }} {
     pub id: Option<ID>,
 {%- for field_key in fields -%}
 {%- set field = fields[field_key] %}
+    /// {{ field["field-title"] }}
     pub {{ field["field_name"] }}: {{ rust.field_rust_type(field) }},
 {%- endfor %}
 }
@@ -14,16 +15,18 @@ pub struct {{ EntityName }} {
 /// {{ EntityName }} Input
 #[derive(Description, InputObject)]
 pub struct {{ EntityName }}Input {
+    // ID
     pub id: Option<ID>,
     {%- for field_key in fields -%}
     {%- set field = fields[field_key] %}
+    /// {{ field["field-title"] }}
     pub {{ field["field_name"] }}: {{ rust.field_rust_type(field) }},
     {%- endfor %}
 }
 
 #[Object(use_type_description)]
 impl {{ EntityName  }} {
-    /// Get ID
+    /// ID
     async fn id(&self) -> &Option<ID> {
         &self.id
     }
@@ -31,6 +34,7 @@ impl {{ EntityName  }} {
 {%- for field_key in fields %}
 {%- set field = fields[field_key] %}
 
+    /// {{ field["field-title"] }}
     async fn {{ field["field_name"] }}(&self) -> &{{ rust.field_rust_type(field) }} {
         &self.{{ field["field_name"] }}
     }
@@ -39,7 +43,7 @@ impl {{ EntityName  }} {
 
 #[derive(SimpleObject)]
 pub struct {{ EntityName | pluralize }}Page {
-    /// Account Records
+    /// {{ EntityName }} Records
     pub records: Vec<{{ EntityName }}>,
     /// Page Index
     pub index: u32,
@@ -53,6 +57,6 @@ pub struct {{ EntityName | pluralize }}Page {
     pub has_previous: bool,
     /// Total Pages
     pub total: u32,
-    /// Total Customer Records
+    /// Total Records
     pub total_records: u64,
 }

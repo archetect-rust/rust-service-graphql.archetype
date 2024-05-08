@@ -13,7 +13,7 @@ context += prompt("Project Suffix:", "project-suffix", #{
 context += set("project-name", render("{{ project-prefix }}-{{project-suffix}}", context), #{
     cases: [
         CasedIdentityCasedValue(PROGRAMMING_CASES),
-        FixedKeyCasedValue("project-title", KebabCase),
+        FixedKeyCasedValue("project-title", TitleCase),
     ],
 });
 

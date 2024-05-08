@@ -38,3 +38,10 @@ ColumnDef::new(entities::{{ entity["entity_name"] }}::Column::{{ field["FieldNam
 {%- macro field_rust_type(field) -%}
 {%- if field["optional"] %}Option<{% endif %}{% if field["repeated"] %}Vec<{% endif %}{{ rust_type(field) }}{% if field["repeated"] %}>{% endif %}{% if field["optional"] %}>{% endif %}
 {%- endmacro -%}
+
+{%- macro core_settings_args(applications) -%}
+{%- for application_key in applications %}
+{%- set application = applications[application_key] -%}
+{{ application["project_name"] }}: ClientConfig{% if not loop.last %}, {% endif %}
+{%- endfor %}
+{%- endmacro -%}

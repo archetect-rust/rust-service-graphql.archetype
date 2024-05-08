@@ -1,5 +1,3 @@
-mod cart;
-mod my_obj;
 mod mutation;
 mod query;
 mod schema;
@@ -16,8 +14,6 @@ mod {{ entity["entity_name"] }};
 pub use mutation::MutationRoot;
 pub use query::QueryRoot;
 pub use schema::create_schema;
-pub use cart::Cart;
-pub use my_obj::MyObj;
 
 {%- for application_key in applications %}
 {%- set application = applications[application_key] %}

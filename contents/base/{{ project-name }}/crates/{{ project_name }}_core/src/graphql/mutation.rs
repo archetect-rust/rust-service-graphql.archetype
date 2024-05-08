@@ -39,7 +39,10 @@ impl MutationRoot {
             .convert_to();
         Ok({{ entity["entity_name"] }})
     }
-
     {% endfor %}
     {%- endfor %}
+    /// Create Echo
+    async fn create_echo(&self, #[graphql(desc = "Echo Message")] message: String) -> String {
+        message
+    }
 }

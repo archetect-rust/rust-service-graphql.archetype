@@ -1,3 +1,4 @@
+{% import "macros/rust" as rust -%}
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -10,7 +11,7 @@ pub struct CoreSettings {
 }
 
 impl CoreSettings {
-    pub fn new(customer_service: ClientConfig, account_service: ClientConfig) -> CoreSettings {
+    pub fn new({{ rust.core_settings_args(applications) }}) -> CoreSettings {
         CoreSettings {
             {%- for application_key in applications %}
             {%- set application = applications[application_key] %}
