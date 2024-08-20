@@ -1,8 +1,7 @@
 use anyhow::{Context, Result};
 use tonic::transport::Channel;
-use tracing::info;
 
-use {{ project_name }}_persistence::{{ ProjectName }}Persistence;
+{% if persistence != "None" %}use {{ project_name }}_persistence::{{ ProjectName }}Persistence;{% endif %}
 {%- for application_key in applications %}
 {%- set application = applications[application_key] %}
 use crate::proto::{{ application["project_name"] }}_client::{{ application["ProjectName"] }}Client;
@@ -10,8 +9,8 @@ use crate::proto::{{ application["project_name"] }}_client::{{ application["Proj
 use crate::settings::CoreSettings;
 
 #[derive(Clone, Debug)]
-pub struct {{ ProjectName }}Core {
-    persistence:{{ ProjectName }}Persistence,
+pub struct {{ ProjectName }}Core {{'{'}}{%if persistence != "None" %}
+    persistence:{{ ProjectName }}Persistence,{% endif %}
 {%- for application_key in applications %}
 {%- set application = applications[application_key] %}
     {{ application["project_name"] }}:{{ application["ProjectName"] }}Client<Channel>,
@@ -19,13 +18,13 @@ pub struct {{ ProjectName }}Core {
 }
 
 impl {{ ProjectName }}Core {
-    pub fn builder(persistence: {{ ProjectName }}Persistence) -> Builder {
-        Builder::new(persistence)
-    }
+    pub fn builder({% if persistence != "None" %}persistence: {{ ProjectName }}Persistence{% endif %}) -> Builder {
+        Builder::new({% if persistence != "None" %}persistence{% endif %})
+    }{% if persistence != "None" %}
 
     pub fn persistence(&self) -> &{{ ProjectName }}Persistence {
         &self.persistence
-    }
+    }{% endif %}
     {%- for application_key in applications %}
     {%- set application = applications[application_key] %}
 
@@ -35,15 +34,15 @@ impl {{ ProjectName }}Core {
     {%- endfor %}
 }
 
-pub struct Builder {
-    persistence: {{ ProjectName }}Persistence,
+pub struct Builder {{'{'}}{% if persistence != "None" %}
+    persistence: {{ ProjectName }}Persistence,{% endif %}
     settings: CoreSettings,
 }
 
 impl Builder {
-    pub fn new(persistence: {{ ProjectName }}Persistence) -> Self {
-        Self {
-            persistence,
+    pub fn new({% if persistence != "None" %}persistence: {{ ProjectName }}Persistence{% endif %}) -> Self {
+        Self {{'{'}}{% if persistence != "None" %}
+            persistence,{% endif %}
             settings: Default::default(),
         }
     }
@@ -62,8 +61,8 @@ impl Builder {
         ).await.context("Unable to connect to {{ application['ProjectName'] }}")?;
 
         {% endfor -%}
-        Ok({{ ProjectName }}Core {
-            persistence: self.persistence,
+        Ok({{ ProjectName }}Core  {{'{'}}{% if persistence != "None" %}
+            persistence: self.persistence,{% endif %}
         {%- for application_key in applications %}
         {%- set application = applications[application_key] %}
             {{ application["project_name"] }},

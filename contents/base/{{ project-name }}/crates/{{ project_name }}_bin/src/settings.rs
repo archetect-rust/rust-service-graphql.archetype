@@ -7,8 +7,8 @@ use clap::ArgMatches;
 use config::{Config, ConfigError, File, Source, Value};
 use serde::{Deserialize, Serialize};
 
-use {{ project_name }}_core::settings::CoreSettings;
-use {{ project_name }}_persistence::settings::PersistenceSettings;
+use {{ project_name }}_core::settings::CoreSettings;{% if persistence != "None" %}
+use {{ project_name }}_persistence::settings::PersistenceSettings;{% endif %}
 use {{ project_name }}_server::settings::ServerSettings;
 
 use crate::traces::TraceFormat;
@@ -18,8 +18,8 @@ const DEFAULT_CONFIG_FILE: &str = "{{ project-name }}";
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Settings {
     server: ServerSettings,
-    core: CoreSettings,
-    persistence: PersistenceSettings,
+    core: CoreSettings,{% if persistence != "None" %}
+    persistence: PersistenceSettings,{% endif %}
     tracing: TraceSettings,
 }
 
@@ -30,7 +30,7 @@ impl Settings {
 
     pub fn core(&self) -> &CoreSettings {
         &self.core
-    }
+    }{% if persistence != "None" %}
 
     pub fn persistence(&self) -> &PersistenceSettings {
         &self.persistence
@@ -38,7 +38,7 @@ impl Settings {
 
     pub fn persistence_mut(&mut self) -> &mut PersistenceSettings {
         &mut self.persistence
-    }
+    }{% endif %}
 
     pub fn tracing(&self) -> &TraceSettings {
         &self.tracing

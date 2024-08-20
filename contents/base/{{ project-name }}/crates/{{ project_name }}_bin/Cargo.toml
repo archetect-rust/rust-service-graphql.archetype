@@ -10,8 +10,8 @@ path = "src/main.rs"
 
 [dependencies]
 {{ project_name }}_server = { path = "../{{ project_name }}_server" }
-{{ project_name }}_core = { path = "../{{ project_name }}_core" }
-{{ project_name }}_persistence = { path = "../{{ project_name }}_persistence" }
+{{ project_name }}_core = { path = "../{{ project_name }}_core" }{% if persistence != "None" %}
+{{ project_name }}_persistence = { path = "../{{ project_name }}_persistence" }{% endif %}
 
 anyhow = "1.0"
 atty = "0.2"

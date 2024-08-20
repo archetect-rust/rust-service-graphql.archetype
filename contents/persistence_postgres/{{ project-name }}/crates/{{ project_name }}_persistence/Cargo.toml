@@ -14,7 +14,7 @@ serde = {version = "1.0", features = ["serde_derive"] }
 testcontainers-async = { git = "https://github.com/jimmiebfulton/testcontainers-async-rust.git"}
 tracing = "0.1"
 tracing-attributes = "0.1"
-url = { version = "2", features = ["serde"] }
+url = { workspacer = true }
 
 [dev-dependencies]
 tokio = {version = "1.17.0", features = ["rt", "macros"]}

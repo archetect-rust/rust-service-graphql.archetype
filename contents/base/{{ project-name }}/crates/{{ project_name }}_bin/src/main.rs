@@ -1,7 +1,7 @@
 use anyhow::Result;
 
-use {{ project_name }}_core::{{ ProjectName }}Core;
-use {{ project_name }}_persistence::{{ ProjectName }}Persistence;
+use {{ project_name }}_core::{{ ProjectName }}Core;{% if persistence != "None" %}
+use {{ project_name }}_persistence::{{ ProjectName }}Persistence;{% endif %}
 use {{ project_name }}_server::{{ ProjectName }}Server;
 
 mod cli;
@@ -15,7 +15,7 @@ async fn main() -> Result<()> {
     let mut settings = settings::Settings::new(&args)?;
     traces::init(settings.tracing())?;
 
-    match args.subcommand() {
+    match args.subcommand() {{'{'}}{% if persistence != "None" %}
         Some(("migrate", args)) => match args.subcommand() {
             Some(("up", _args)) => {
                 // Don't migrate automatically
@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
                     .await?;
             }
             _ => unreachable!(),
-        },
+        },{% endif %}
         Some(("config", args)) => match args.subcommand() {
             Some(("defaults", _)) => settings::Settings::default().print()?,
             Some(("merged", _)) => settings.print()?,
@@ -50,12 +50,12 @@ async fn main() -> Result<()> {
             unreachable!()
         }
         None => {
-            tracing::info!("Initializing...");
+            tracing::info!("Initializing...");{% if persistence != "None" %}
             let persistence = {{ ProjectName }}Persistence::builder()
                 .with_settings(settings.persistence())
                 .build()
-                .await?;
-            let core = {{ ProjectName }}Core::builder(persistence)
+                .await?;{% endif %}
+            let core = {{ ProjectName }}Core::builder({% if persistence != "None" %}persistence{% endif %})
                 .with_settings(settings.core())
                 .build()
                 .await?;

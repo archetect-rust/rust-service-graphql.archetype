@@ -24,6 +24,14 @@ context += prompt("Service Port:", "service-port", #{
     max: 65534,
 });
 
+context += prompt("Persistence:", "persistence", #{
+  type: Select([
+    "Postgres",
+    "None",
+  ]),
+  defaults_with: "Postgres",
+});
+
 context += render(Archetype("model-casing"), ANSWERS + #{
     default_model: context["project-prefix"],
 });
@@ -33,8 +41,13 @@ if switch_enabled("debug-context") {
 }
 
 render(Directory("contents/base"), context);
-for entity in context.model.entities.values() {
-    render(Directory("contents/entity_persistence"), context + entity);
+
+if context["persistence"] != "None" {
+    render(Directory("contents/persistence_postgres"), context);
+
+    for entity in context.model.entities.values() {
+        render(Directory("contents/entity_persistence"), context + entity);
+    }
 }
 
 if type_of(context.applications) == "map" {
