@@ -1,5 +1,5 @@
 /// The conversion traits are based on the core From/Into traits, but are local to this crate, allowing these traits
-/// to be use with foreign types
+/// to be used with foreign types.  This avoids errors due to Rust's orphan rule.
 
 pub trait ConvertTo<T>: Sized {
     fn convert_to(self) -> T;

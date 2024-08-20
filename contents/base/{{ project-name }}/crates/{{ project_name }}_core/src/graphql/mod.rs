@@ -1,6 +1,7 @@
+use async_graphql::{EmptySubscription, Schema, SchemaBuilder};
+
 mod mutation;
 mod query;
-mod schema;
 
 {%- for application_key in applications %}
 {%- set application = applications[application_key] %}
@@ -22,3 +23,7 @@ pub use schema::create_schema;
 pub use {{ entity["entity_name"] }}::*;
 {%- endfor %}
 {%- endfor %}
+
+pub fn create_schema() -> SchemaBuilder<QueryRoot, MutationRoot, EmptySubscription> {
+    Schema::build(QueryRoot, MutationRoot, EmptySubscription)
+}

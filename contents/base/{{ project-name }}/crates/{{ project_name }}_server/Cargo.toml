@@ -1,29 +1,32 @@
 [package]
 name = "{{ project_name }}_server"
 version = "0.1.0"
-edition = "2021"
+description = "{{ project-title }}: Server"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-{{ project_name }}_core = { path = "../{{ project_name }}_core" }{% if persistence != "None" %}
-{{ project_name }}_persistence = { path = "../{{ project_name }}_persistence" }{% endif %}
+{{ project_name }}_core = { path = "../{{ project_name }}_core", version = "0.1.0" }{% if persistence != "None" %}
+{{ project_name }}_persistence = { path = "../{{ project_name }}_persistence", version = "0.1.0" }{% endif %}
 
 anyhow = "1.0"
 axum = "0.7.5"
 async-graphql = "7.0.3"
 async-graphql-axum = "7.0.3"
-serde = {version = "1.0", features = ["serde_derive"] }
-tonic = "0.6.2"
-tonic-health = "0.5.0"
-tonic-reflection = "0.3.0"
-tokio = {version = "1", features = ["rt-multi-thread", "time", "macros", "net"]}
+jsonwebtoken = { workspace = true }
+serde = { version = "1.0", features = ["serde_derive"] }
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "time",
+    "macros",
+    "net",
+] }
 tokio-stream = "0.1"
 tracing = "0.1"
 tracing-attributes = "0.1"
-
-[dev-dependencies]
-{{ project_name }}_client = { path = "../{{ project_name }}_client" }
 
 [[test]]
 name = "server"

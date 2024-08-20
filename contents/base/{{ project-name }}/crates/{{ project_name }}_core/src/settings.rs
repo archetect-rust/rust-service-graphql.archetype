@@ -1,6 +1,5 @@
 {% import "macros/rust" as rust -%}
 use serde::{Deserialize, Serialize};
-use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CoreSettings {
@@ -43,35 +42,4 @@ impl Default for CoreSettings {
             {%- endfor %}
         }
     }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ClientConfig {
-    #[serde(default = "default_client_url")]
-    url: Url,
-}
-
-impl ClientConfig {
-    pub fn new(url: Url) -> ClientConfig {
-        ClientConfig {
-            url,
-        }
-    }
-
-
-    pub fn url(&self) -> &Url {
-        &self.url
-    }
-}
-
-impl Default for ClientConfig {
-    fn default() -> Self {
-        ClientConfig {
-            url: default_client_url(),
-        }
-    }
-}
-
-fn default_client_url() -> Url {
-    Url::parse("http://localhost:8080").expect("Valid Url")
 }

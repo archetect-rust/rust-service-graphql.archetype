@@ -8,8 +8,11 @@ use crate::proto::{{ application["project_name"] }}_client::{{ application["Proj
 {%- endfor %}
 use crate::settings::CoreSettings;
 
+/// This type provides a single context for holding shared state used in GraphQL Objects.  Any clients,
+/// persistence, etc., should have configuration, built up, and exposed from this shared context.
 #[derive(Clone, Debug)]
-pub struct {{ ProjectName }}Core {{'{'}}{%if persistence != "None" %}
+pub struct {{ ProjectName }}Core {{'{'}}
+        // Shared State, Clients, etc. go here{%if persistence != "None" %}
     persistence:{{ ProjectName }}Persistence,{% endif %}
 {%- for application_key in applications %}
 {%- set application = applications[application_key] %}

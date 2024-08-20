@@ -1,140 +1,134 @@
+mod cli;
+
 use std::process;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::{ArgMatches, Command};
+use crate::cli::{BuildArchitecture, BuildStyle, BuildMode};
 
-const PG_USERNAME: &str = "test";
-const PG_DOCKER_NAME: &'static str = "postgres-xtask";
-const SERVICE_NAME: &str = "{{ project-prefix }}-service";
+const APPLICATION_NAME_FULL: &str = concat!("naxgrp.jfrog.io/nax-platform-docker/applications/{{ project-name }}");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() -> Result<()> {
-    let args = clap::command!()
-        .subcommand_required(true)
-        .arg_required_else_help(true)
-        .subcommand(
-            Command::new("postgres")
-                .about("Dockerized PostgreSQL Management")
-                .subcommand(Command::new("run").about("Create and Start a PostgreSQL Docker Container"))
-                .subcommand(Command::new("kill").about("Kill PostgreSQL Docker Container"))
-                .subcommand(Command::new("stop").about("Stop PostgreSQL Docker Container"))
-                .subcommand(Command::new("start").about("Start an existing PostgreSQL Docker Container"))
-                .subcommand(Command::new("rm").about("Remove an existing PostgreSQL Docker Container"))
-                .subcommand(Command::new("createdb").about("Creates the database in an already-running posgres"))
-                .subcommand(Command::new("dropdb").about("Drops the database in an already-running posgres")),
-        )
-        .subcommand(
-            Command::new("docker")
-                .about("Docker Operations")
-                .subcommand(Command::new("build").about("Builds an application Docker image."))
-                .subcommand(Command::new("rmi").about("Removes the application Docker image.")),
-        )
-        .get_matches();
+    let args = cli::arg_matches();
 
     match args.subcommand() {
-        Some(("postgres", args)) => handle_postgres_commands(args),
+        Some(("build", args)) => handle_build_command(args),
         Some(("docker", args)) => handle_docker_commands(args),
+        Some(("install", args)) => handle_install_command(args),
         Some((command, _)) => anyhow::bail!("Unexpected command: {command}"),
         None => anyhow::bail!("Expected subcommand"),
     }
 }
 
-fn handle_postgres_commands(args: &ArgMatches) -> Result<()> {
-    match args.subcommand() {
-        Some(("run", _)) => postgres_init(),
-        Some(("createdb", _)) => postgres_createdb(),
-        Some(("dropdb", _)) => postgres_dropdb(),
-        Some((command, _)) => postgres_docker_command(command),
-        None => anyhow::bail!("Expected subcommand"),
-    }
-}
-
-fn postgres_createdb() -> Result<()> {
-    process::Command::new("createdb")
-        .arg("-U")
-        .arg(PG_USERNAME)
-        .arg("-h")
-        .arg("localhost")
-        .arg(SERVICE_NAME)
-        .spawn()?
-        .wait()?;
-
-    println!("CLI: psql -U test -h localhost {}", SERVICE_NAME);
+fn handle_install_command(_args: &ArgMatches) -> Result<()> {
+    let mut command = process::Command::new("cargo");
+    command.args(["install", "--path", "crates/{{ project_name }}_bin"]);
 
     Ok(())
 }
 
-fn postgres_dropdb() -> Result<()> {
-    process::Command::new("dropdb")
-        .arg("-U")
-        .arg(PG_USERNAME)
-        .arg("-h")
-        .arg("localhost")
-        .arg(SERVICE_NAME)
-        .spawn()?
-        .wait()?;
+fn handle_build_command(args: &ArgMatches) -> Result<()> {
+    let mode = args.get_one::<BuildMode>("mode");
+    let architecture = args.get_one::<BuildArchitecture>("architecture");
+
+    let mut command = process::Command::new("cargo");
+    command.arg("build");
+
+    if let Some(BuildMode::Release) = mode {
+        command.arg("--release");
+    }
+
+    if let Some(architecture) = architecture {
+        command.arg("--target")
+            .arg(format!("{architecture}"));
+    };
+
+    command.status()?;
 
     Ok(())
 }
 
 fn handle_docker_commands(args: &ArgMatches) -> Result<()> {
     match args.subcommand() {
-        Some(("build", _args)) => docker_build(),
-        Some(("rmi", _args)) => docker_rmi(),
+        Some(("build", args)) => docker_build(args),
+        Some(("remove", args)) => docker_rmi(args),
+        Some(("run", args)) => docker_run(args),
+        Some(("image", args)) => docker_image(args),
         _ => Ok(()),
     }
 }
 
-fn docker_build() -> Result<()> {
-    process::Command::new("docker")
+fn docker_build(args: &ArgMatches) -> Result<()> {
+    let mode = args.get_one::<BuildMode>("mode").expect("Required by Clap");
+    let style = args.get_one::<BuildStyle>("style").expect("Required by Clap");
+    let architecture = args.get_one::<BuildArchitecture>("architecture");
+
+    println!("Build Profile: {mode}");
+    println!("Package From: {style}");
+
+    let mut command = process::Command::new("docker");
+
+    command
         .arg("build")
+        .arg("--platform")
+        .arg("linux/arm64")
         .arg("-t")
-        .arg(SERVICE_NAME)
+        .arg(format!("{}:{}", APPLICATION_NAME_FULL, VERSION))
+        .arg("-t")
+        .arg(format!("{}:{}", APPLICATION_NAME_FULL, "latest"))
+        .arg("--build-arg")
+        .arg(format!("profile={mode}"))
+        .arg("--build-arg")
+        .arg(format!("style={style}"))
+        .arg("--file")
+        .arg(format!(".platform/docker/{style}/Dockerfile"))
         .arg(".")
-        .spawn()?
-        .wait()?;
+        .arg("--progress=plain")
+        .arg("--no-cache")
+    ;
+
+    if let Some(architecture) = architecture {
+        command
+            .arg("--build-arg")
+            .arg(format!("architecture={architecture}"));
+    }
+
+    command.status()?;
 
     Ok(())
 }
 
-fn docker_rmi() -> Result<()> {
-    process::Command::new("docker")
-        .arg("rmi")
-        .arg(SERVICE_NAME)
-        .spawn()?
-        .wait()?;
-
-    Ok(())
-}
-
-fn postgres_init() -> Result<()> {
+fn docker_run(_args: &ArgMatches) -> Result<()> {
     process::Command::new("docker")
         .arg("run")
-        .arg("-e")
-        .arg(format!("POSTGRES_USER={PG_USERNAME}"))
-        .arg("-e")
-        .arg("POSTGRES_HOST_AUTH_METHOD=trust")
-        .arg("-e")
-        .arg(format!("POSTGRES_DB={SERVICE_NAME}"))
-        .arg("-p")
-        .arg("127.0.0.1:5432:5432")
-        .arg("--name")
-        .arg(PG_DOCKER_NAME)
-        .arg("-d")
-        .arg("postgres:latest")
-        .arg("-N")
-        .arg("1000")
-        .spawn()?
-        .wait()?;
+        .arg("--platform")
+        .arg("linux/arm64")
+        .arg("-it")
+        .arg(APPLICATION_NAME_FULL)
+        .status()?;
+    Ok(())
+}
 
-    println!("CLI: psql -U test -h localhost {}", SERVICE_NAME);
+fn docker_image(args: &ArgMatches) -> Result<()> {
+    match args.subcommand() {
+        Some(("name", _args)) => println!("{APPLICATION_NAME_FULL}"),
+        Some(("version", _args)) => println!("{VERSION}"),
+        _ => println!("{APPLICATION_NAME_FULL}:{VERSION}"),
+    }
 
     Ok(())
 }
 
-fn postgres_docker_command(command: &str) -> Result<()> {
+fn docker_rmi(_args: &ArgMatches) -> Result<()> {
     process::Command::new("docker")
-        .arg(command)
-        .arg(PG_DOCKER_NAME)
+        .arg("rmi")
+        .arg(APPLICATION_NAME_FULL)
+        .spawn()?
+        .wait()?;
+    process::Command::new("docker")
+        .arg("rmi")
+        .arg(format!("{APPLICATION_NAME_FULL}:{VERSION}"))
         .spawn()?
         .wait()?;
 

@@ -19,10 +19,10 @@ install-defaults := ''
 install install-options=install-defaults:
     cargo install --path crates/{{ project_name }}_bin/ {{'{'}}{ install-options }}
 
-run-defaults := '-- --temp-db'
+run-defaults := '{% if persistence != "None" %}--temp-db{% endif %}'
 
 run run-options=run-defaults:
-    cargo run {{'{'}}{ run-options }}
+    cargo run -- {{'{'}}{ run-options }}
 
 build-defaults := ''
 

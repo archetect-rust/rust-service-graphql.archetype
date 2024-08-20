@@ -5,7 +5,7 @@ use crate::traces::TraceFormat;
 
 pub fn arg_matches() -> ArgMatches {
     command!()
-        .name("{{ project-name }}-gateway")
+        .name("{{ project-name }}-gateway"){% if persistence != "None" %}
         .subcommand(
             Command::new("migrate")
                 .subcommand_required(true)
@@ -23,6 +23,42 @@ pub fn arg_matches() -> ArgMatches {
                         ),
                 ),
         )
+        .arg(
+            Arg::new("log-sql")
+                .help("Turns sql logging on or off.")
+                .long("log-sql")
+                .action(ArgAction::SetTrue)
+                .value_parser(BoolishValueParser::new())
+                .env("PERSISTENCE_DATABASE_LOG_SQL")
+        )
+        .arg(
+            Arg::new("temp-db")
+                .help("Initialize and migrate an ephemeral database")
+                .long("temp-db")
+                .value_parser(BoolishValueParser::new())
+                .action(ArgAction::SetTrue)
+                .env("PERSISTENCE_TEMP_DB")
+        )
+        .arg(
+            Arg::new("migrate")
+                .help("Whether or not to automatically migrate the database")
+                .long("migrate")
+                .action(ArgAction::SetTrue)
+                .value_parser(BoolishValueParser::new())
+                .env("PERSISTENCE_MIGRATE")
+
+        )
+        .arg(
+            Arg::new("database-url")
+                .help("Database URL")
+                .long("database-url")
+                .action(ArgAction::Set)
+                .env("PERSISTENCE_DATABASE_URL")
+        ){% endif %}
+        .subcommand(
+            Command::new("schema")
+                .about("Generate the GraphQL Schema")
+        ),
         .subcommand(
             Command::new("config")
                 .about("Configuration Operations")
@@ -52,45 +88,13 @@ pub fn arg_matches() -> ArgMatches {
                 .env("SERVER_HOST")
         )
         .arg(
-            Arg::new("log-sql")
-                .help("Turns sql logging on or off.")
-                .long("log-sql")
-                .action(ArgAction::SetTrue)
-                .value_parser(BoolishValueParser::new())
-                .env("PERSISTENCE_DATABASE_LOG_SQL")
-        )
-        .arg(
             Arg::new("service-port")
                 .help("Service Port")
                 .short('p')
                 .long("service-port")
                 .action(ArgAction::Set)
-                .value_parser(value_parser!(i64).range(1024..65535))
+                .value_parser(value_parser!(i64).range(0..65535))
                 .env("SERVER_SERVICE_PORT")
-        )
-        .arg(
-            Arg::new("temp-db")
-                .help("Initialize and migrate an ephemeral database")
-                .long("temp-db")
-                .value_parser(BoolishValueParser::new())
-                .action(ArgAction::SetTrue)
-                .env("PERSISTENCE_TEMP_DB")
-        )
-        .arg(
-            Arg::new("migrate")
-                .help("Whether or not to automatically migrate the database")
-                .long("migrate")
-                .action(ArgAction::SetTrue)
-                .value_parser(BoolishValueParser::new())
-                .env("PERSISTENCE_MIGRATE")
-
-        )
-        .arg(
-            Arg::new("database-url")
-                .help("Database URL")
-                .long("database-url")
-                .action(ArgAction::Set)
-                .env("PERSISTENCE_DATABASE_URL")
         )
         .arg(
             Arg::new("tracing-format")

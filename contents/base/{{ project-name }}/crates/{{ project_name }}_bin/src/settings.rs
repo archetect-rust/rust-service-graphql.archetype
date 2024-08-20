@@ -93,14 +93,13 @@ impl Settings {
         };
 
         // Merge Environment Variables/Command Line overrides
-        let clap_source = ClapSource::builder()
+        let clap_source = ClapSource::builder(){% if persistence != "None" %}
             .map(ArgType::string("database-url"), MapTo::string("persistence.database.url"))
             .map(ArgType::flag("migrate"), MapTo::string("persistence.migrate"))
-            .map(ArgType::string("host"), MapTo::string("server.host"))
             .map(ArgType::flag("log-sql"), MapTo::string("persistence.database.log_sql"))
-
+            .map(ArgType::flag("temp-db"), MapTo::string("persistence.temporary")){% endif %}
+            .map(ArgType::string("host"), MapTo::string("server.host"))
             .map(ArgType::u64("service-port"), MapTo::string("server.service.port"))
-            .map(ArgType::flag("temp-db"), MapTo::string("persistence.temporary"))
             .map(ArgType::string("tracing-format"), MapTo::string("tracing.format"))
             .map(ArgType::string("tracing-filter"), MapTo::string("tracing.filter"))
 {%- for application_key in applications %}
@@ -165,6 +164,7 @@ impl ClapBuilder {
     }
 }
 
+#[allow(unused)]
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 enum ArgType {
     String(String),
@@ -172,6 +172,7 @@ enum ArgType {
     U64(String),
 }
 
+#[allow(unused)]
 impl ArgType {
     fn string<T: Into<String>>(arg: T) -> ArgType {
         ArgType::String(arg.into())

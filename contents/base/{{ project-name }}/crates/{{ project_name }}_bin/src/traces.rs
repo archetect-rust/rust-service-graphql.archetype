@@ -1,6 +1,7 @@
 #![allow(non_camel_case_types)]
 
-use std::env;
+use std::{env, io};
+use std::io::{IsTerminal};
 
 use anyhow::Result;
 use clap::ValueEnum;
@@ -32,7 +33,7 @@ pub fn init(settings: &TraceSettings) -> Result<()> {
     match settings.format() {
         TraceFormat::standard => {
             tracing_subscriber::registry()
-                .with(fmt::layer().with_ansi(atty::is(atty::Stream::Stdout)))
+                .with(fmt::layer().with_ansi(io::stdout().is_terminal()))
                 .with(filter)
                 .init();
         }
@@ -44,7 +45,7 @@ pub fn init(settings: &TraceSettings) -> Result<()> {
         }
         TraceFormat::pretty => {
             tracing_subscriber::registry()
-                .with(fmt::layer().pretty().with_ansi(atty::is(atty::Stream::Stdout)))
+                .with(fmt::layer().pretty().with_ansi(io::stdout().is_terminal()))
                 .with(filter)
                 .init();
         }

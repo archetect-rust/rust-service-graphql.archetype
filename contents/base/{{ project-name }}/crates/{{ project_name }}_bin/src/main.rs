@@ -12,7 +12,7 @@ mod traces;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
     let args = cli::arg_matches();
-    let mut settings = settings::Settings::new(&args)?;
+    let {% if persistence != "None" %}mut {% endif %}settings = settings::Settings::new(&args)?;
     traces::init(settings.tracing())?;
 
     match args.subcommand() {{'{'}}{% if persistence != "None" %}
@@ -40,6 +40,13 @@ async fn main() -> Result<()> {
             }
             _ => unreachable!(),
         },{% endif %}
+        Some(("schema", _args)) => {
+            let schema = {{ project_name }}_core::graphql::create_schema()
+                .finish()
+                .sdl()
+                ;
+            println!("{schema}");
+        },
         Some(("config", args)) => match args.subcommand() {
             Some(("defaults", _)) => settings::Settings::default().print()?,
             Some(("merged", _)) => settings.print()?,

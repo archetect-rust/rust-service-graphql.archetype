@@ -1,20 +1,25 @@
 [package]
 name = "{{ project_name }}_core"
 version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "{{ project-title }}: Core"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]{% if persistence != "None" %}
-{{ project_name }}_persistence = { path = "../{{ project_name }}_persistence" }{% endif %}
-
+{{ project_name }}_persistence = { path = "../{{ project_name }}_persistence", version = "0.1.0" }
+{% endif %}
 async-graphql = "7.0.3"
-serde = {version = "1.0", features = ["serde_derive"] }
+serde = { version = "1.0", features = ["serde_derive"] }
 anyhow = "1.0"
+jsonwebtoken = { workspace = true }
 url = { workspace = true }
-prost = "0.12.0"
-tonic = "0.11.0"
+prost = "0.13.1"
+thiserror = "1.0.63"
+tonic = "0.12.1"
 tracing = "0.1"
+# UUID v7 is a sortable UUID variant that performs better when used as a primary key in databases
+uuid = { version = "1.10.0", features = ["v7"] }
 
 [build-dependencies]
-tonic-build = "0.11.0"
+tonic-build = "0.12.1"
