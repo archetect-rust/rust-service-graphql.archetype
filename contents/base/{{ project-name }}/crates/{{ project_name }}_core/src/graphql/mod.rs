@@ -14,7 +14,6 @@ mod {{ entity["entity_name"] }};
 
 pub use mutation::MutationRoot;
 pub use query::QueryRoot;
-pub use schema::create_schema;
 
 {%- for application_key in applications %}
 {%- set application = applications[application_key] %}
