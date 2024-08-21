@@ -58,7 +58,7 @@ pub fn arg_matches() -> ArgMatches {
         .subcommand(
             Command::new("schema")
                 .about("Generate the GraphQL Schema")
-        ),
+        )
         .subcommand(
             Command::new("config")
                 .about("Configuration Operations")
